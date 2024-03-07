@@ -1,0 +1,8 @@
+Iteration 0 Confidence 0.8831714391708374
+Iteration 50 Confidence 0.8474330902099609
+Iteration 100 Confidence 0.7547668814659119
+Iteration 150 Confidence 0.5957032442092896
+Iteration 200 Confidence 0.4018174409866333
+Iteration 250 Confidence 0.10613584518432617
+Total Iterations Done 270
+Original label 5, Predicted Label 6
