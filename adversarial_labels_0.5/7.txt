@@ -1,0 +1,10 @@
+image_7_1.jpg 0
+image_7_10.jpg 0
+image_7_2.jpg 1
+image_7_3.jpg 0
+image_7_4.jpg 1
+image_7_5.jpg 1
+image_7_6.jpg 1
+image_7_7.jpg 1
+image_7_8.jpg 1
+image_7_9.jpg 1

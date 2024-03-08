@@ -91,17 +91,17 @@ def zoo_attack(network, image, t_0, step_size_):
     max_iteration = 5000
     curr_img = image.clone()
 
-    # initial_x = (image.shape[2] / 2)
-    # initial_y = (image.shape[2] / 2)
-    # neighborhood = 2
+    initial_x = (image.shape[2] / 2)
+    initial_y = (image.shape[2] / 2)
+    neighborhood = 2
 
     while max_iteration > 0 and not convergence:
 
-        # c_x = min(max(initial_x + random.randint(-neighborhood, neighborhood), 0), image.shape[2] - 1)
-        # c_y = min(max(initial_y + random.randint(-neighborhood, neighborhood), 0), image.shape[3] - 1)
-        # coordinate = c_x * image.shape[2] + c_y
+        c_x = min(max(initial_x + random.randint(-neighborhood, neighborhood), 0), image.shape[2] - 1)
+        c_y = min(max(initial_y + random.randint(-neighborhood, neighborhood), 0), image.shape[3] - 1)
+        coordinate = c_x * image.shape[2] + c_y
 
-        coordinate = random.randint(0, image.shape[2] * image.shape[3] - 1)
+        #coordinate = random.randint(0, image.shape[2] * image.shape[3] - 1)
         g_i, h_i = grad_and_hessian(network, curr_img, coordinate, t_0)
         if h_i <= 0:
             delta_star = -step_size_ * g_i

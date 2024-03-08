@@ -1,14 +1,17 @@
 import os.path
-
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, roc_curve
 import numpy as np
 
 import pprint
 
 from PIL import Image
 
-STEP_SIZE = 1.0
-TARGET_DIGITS = [2]
+STEP_SIZE = 0.5
+TARGET_DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 pp = pprint.PrettyPrinter(indent=4)
+MAX_REGION_COUNT_BENIGN = 1
+
 
 class UnionFind:
     def __init__(self, n):
@@ -57,9 +60,58 @@ def count_white_regions(image, white_threshold):
     return len(regions)
 
 
+def calculate_fpr_tpr(predicted_labels, ground_truth_labels):
+    true_positives = np.sum((predicted_labels == 1) & (ground_truth_labels == 1))
+    false_positives = np.sum((predicted_labels == 1) & (ground_truth_labels == 0))
+    true_negatives = np.sum((predicted_labels == 0) & (ground_truth_labels == 0))
+    false_negatives = np.sum((predicted_labels == 0) & (ground_truth_labels == 1))
+
+    print(true_positives)
+
+    tpr = true_positives / (true_positives + false_negatives)
+    print(tpr)
+    fpr = false_positives / (false_positives + true_negatives)
+    print(fpr)
+
+    return fpr, tpr
+
+
+def plot_single_roc_curve(thresholds, predicted_labels, ground_truth_labels):
+    # Initialize arrays to store FPR and TPR values
+    all_fpr = []
+    all_tpr = []
+
+    # Calculate FPR and TPR for each threshold
+    for i, threshold in enumerate(thresholds):
+        fpr, tpr = calculate_fpr_tpr(predicted_labels[i], ground_truth_labels)
+        all_fpr.append(fpr)
+        all_tpr.append(tpr)
+
+    # Combine FPR and TPR arrays
+    combined_curve = np.column_stack((all_fpr, all_tpr))
+
+    # Sort the combined curve by FPR
+    sorted_combined_curve = combined_curve[np.argsort(combined_curve[:, 0])]
+    print(sorted_combined_curve)
+
+    # Plot the single ROC curve
+    plt.figure(figsize=(10, 8))
+    plt.plot(sorted_combined_curve[:, 0], sorted_combined_curve[:, 1], linestyle='--', color='b', marker='o',
+             label=f'Combined ROC Curve (AUC = {roc_auc_score(ground_truth_labels, predicted_labels[0]):.2f})')
+    plt.plot([0, 1], [0, 1], linestyle='--', color='r', label='Random Guessing')
+
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Combined ROC Curve')
+    plt.legend(loc='lower right')
+    plt.show()
+
+
 threshold_values = list()
-for i in range(4):
-    threshold_values.append(255 * 0.25 * (i+1))
+for i in range(9):
+    threshold_values.append(255 * 0.1 * (i + 1))
 
 all_images = dict()
 for target_digit in TARGET_DIGITS:
@@ -73,7 +125,6 @@ for target_digit in TARGET_DIGITS:
         all_images_target.append(np_arr_img)
     all_images[target_digit] = all_images_target
 
-
 threshold_dicts = dict()
 
 for particular_threshold in threshold_values:
@@ -82,7 +133,7 @@ for particular_threshold in threshold_values:
     for k, v in all_images.items():
         count_list = list()
         for im in v:
-            count = count_white_regions(im,particular_threshold)
+            count = count_white_regions(im, particular_threshold)
             count_list.append(count)
         num_regions_curr_threshold[k] = count_list
 
@@ -91,6 +142,15 @@ for particular_threshold in threshold_values:
     print("\n\n")
     threshold_dicts[particular_threshold] = num_regions_curr_threshold
 
+converted_threshold_list_all = list()
+for particular_threshold in sorted(threshold_dicts.keys()):
+    c_p = list()
+    for digit in sorted(threshold_dicts[particular_threshold].keys()):
+        c_p = c_p + [int(i > MAX_REGION_COUNT_BENIGN) for i in threshold_dicts[particular_threshold][digit]]
+    converted_threshold_list_all.append(c_p)
+
+print(threshold_values)
+pp.pprint(converted_threshold_list_all)
 
 gt_labels_all = dict()
 for target_digit in TARGET_DIGITS:
@@ -105,13 +165,14 @@ for target_digit in TARGET_DIGITS:
 
         gt_labels_all[target_digit] = gt_labels
 
+gt_labels_all_list = list()
+for digit in sorted(gt_labels_all.keys()):
+    gt_labels_all_list = gt_labels_all_list + gt_labels_all[digit]
+print(gt_labels_all_list)
 
-for target_digit in TARGET_DIGITS:
 
-
-
-
-
+plot_single_roc_curve(threshold_values, np.array(converted_threshold_list_all),
+                      np.array(gt_labels_all_list))
 #
 # # Example usage:
 # # Assuming mnist_image is your 32x32 MNIST image as a 2D NumPy array

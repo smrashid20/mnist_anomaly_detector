@@ -39,7 +39,7 @@ def plot_single_roc_curve(thresholds, predicted_labels, ground_truth_labels):
 
     # Plot the single ROC curve
     plt.figure(figsize=(10, 8))
-    plt.plot(sorted_combined_curve[:, 0], sorted_combined_curve[:, 1], linestyle='--', color='b',
+    plt.plot(sorted_combined_curve[:, 0], sorted_combined_curve[:, 1], linestyle='--', color='b', marker='o',
              label=f'Combined ROC Curve (AUC = {roc_auc_score(ground_truth_labels, predicted_labels[0]):.2f})')
     plt.plot([0, 1], [0, 1], linestyle='--', color='r', label='Random Guessing')
 
