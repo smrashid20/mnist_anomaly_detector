@@ -20,8 +20,8 @@ model.load_state_dict(torch.load('./model_weights/cpu_model.pth'))
 model.to(device)
 model.eval()
 
-STEP_SIZE = 1
-TARGET_DIGITS = [2]
+STEP_SIZE = 0.5
+TARGET_DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ATTACK_PROBABILITY = 0.5
 random.seed(1)
 
@@ -62,11 +62,11 @@ def grad_and_hessian(network, image, coordinate, t_0):
     c_y = int(coordinate % image.shape[2])
     e_i = torch.zeros(image.shape).to(device)
     e_i[0][0][c_x][c_y] = torch.tensor(1.).to(device)
-    h = torch.tensor(0.0001).to(device)
-    return ((f_x(network, image + h * e_i, t_0) - f_x(network, image - h * e_i, t_0)) / (2 * 0.0001),
+    h = torch.tensor(0.001).to(device)
+    return ((f_x(network, image + h * e_i, t_0) - f_x(network, image - h * e_i, t_0)) / (2 * 0.001),
             (f_x(network, image + h * e_i, t_0) - 2 * f_x(network, image + h * e_i, t_0) + f_x(network, image - h * e_i,
                                                                                                t_0)) / (
-                    2 * 0.0001) ** 2)
+                    2 * 0.001) ** 2)
 
 
 def predict(network, image, t_0):
@@ -88,7 +88,7 @@ def confidence(network, image, t_0):
 
 def zoo_attack(network, image, t_0, step_size_):
     convergence = False
-    max_iteration = 500
+    max_iteration = 5000
     curr_img = image.clone()
 
     # initial_x = (image.shape[2] / 2)
@@ -118,8 +118,8 @@ def zoo_attack(network, image, t_0, step_size_):
 
         convergence = predict(network, curr_img, t_0)
 
-        if (500 - max_iteration) % 25 == 0:
-            print("Iteration {}".format(500 - max_iteration))
+        if (5000 - max_iteration) % 25 == 0:
+            print("Iteration {}".format(5000 - max_iteration))
             print("Current Confidence Score: {}".format(confidence(network, curr_img, t_0)))
 
         max_iteration -= 1
@@ -128,7 +128,7 @@ def zoo_attack(network, image, t_0, step_size_):
 
 
 if not os.path.exists('adversarial_digits_{}'.format(STEP_SIZE)):
-    os.mkdir('adversarial_digits')
+    os.mkdir('adversarial_digits_{}'.format(STEP_SIZE))
 else:
     delete_contents('adversarial_digits_{}'.format(STEP_SIZE))
 
@@ -158,15 +158,16 @@ for target_digit in TARGET_DIGITS:
         if random_binary(ATTACK_PROBABILITY) == 1:
             print("Creating adv.")
             adv_img = zoo_attack(model.float(), target_torch_img.float(), target_label, STEP_SIZE)
-            save_image(adv_img, os.path.join('adversarial_digits/' + str(target_digit), file))
-            adv_label_digit.append(1)
+            save_image(adv_img, os.path.join('adversarial_digits_{}'.format(STEP_SIZE) + "/" + str(target_digit), file))
+            adv_label_digit.append([file, 1])
         else:
             print("Placing as is.")
-            save_image(np_img_arr, os.path.join('adversarial_digits/' + str(target_digit), file))
+            save_image(np_img_arr, os.path.join('adversarial_digits_{}'.format(STEP_SIZE) + "/" + str(target_digit),
+                                                file))
             adv_label_digit.append([file, 0])
     adv_labels_all_digits[target_digit] = adv_label_digit
 
 for k, v in adv_labels_all_digits.items():
-    with open(os.path.join('adversarial_labels', str(k) + '.txt'), 'w') as f:
+    with open(os.path.join('adversarial_labels_{}'.format(STEP_SIZE), str(k) + '.txt'), 'w') as f:
         for item in v:
-            f.write("{} {}\\n".format(item[0], item[1]))
+            f.write("{} {}\n".format(item[0], item[1]))
