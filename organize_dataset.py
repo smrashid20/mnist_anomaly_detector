@@ -39,10 +39,10 @@ for i in range(10):
 digit_count = [0] * 10
 print(len(testloader))
 for i, (images, labels) in enumerate(testloader):
-    if sum(digit_count) >= 10 * 20:
+    if sum(digit_count) >= 10 * 10:
         break
     digit = int(labels.cpu().detach().numpy()[0])
-    if digit_count[digit] < 20:
+    if digit_count[digit] < 10:
         digit_count[digit] += 1
         save_image(images.numpy(), os.path.join('clean_digits/' + str(digit), 'image_{}_{}'.
                                             format(digit,digit_count[digit])))
