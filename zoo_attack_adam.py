@@ -40,7 +40,7 @@ step_sizes = [0.1]
 
 
 def save_image(image, filename):
-    adv_image = image.clone().detach().numpy()
+    adv_image = image.clone().cpu().detach().numpy()
     pil_image = Image.fromarray((adv_image[0][0] * 255).astype(np.uint8))
     pil_image.save('{}.jpg'.format(filename))
 
